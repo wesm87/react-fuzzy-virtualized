@@ -1,0 +1,26 @@
+{
+  "name": "react-fuzzy-virtualized",
+  "version": "0.0.1",
+  "description": "Lightweight and versatile React components for implementing fuzzy search and filtering.",
+  "author": "Wes Moberly <wesm87@gmail.com>",
+  "repository": "https://github.com/wesm87/react-fuzzy-virtualized",
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {},
+  "devDependencies": {
+    "@babel/core": "^7.0.0-beta.35",
+    "@babel/preset-env": "^7.0.0-beta.35",
+    "babel-plugin-react-flow-props-to-prop-types": "^0.15.0",
+    "babel-preset-react-app": "^3.1.0",
+    "eslint": "^4.13.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-jsx-a11y": "^6.0.2",
+    "eslint-plugin-react": "^7.4.0",
+    "flow-bin": "^0.61.0"
+  },
+  "dependencies": {
+    "prop-types": "^15.6.0",
+    "prop-types-extra": "^1.0.1"
+  }
+}
