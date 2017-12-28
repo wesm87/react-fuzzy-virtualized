@@ -57,3 +57,8 @@ typings/
 # dotenv environment variables file
 .env
 
+# Build directory
+build/
+
+# Flow types
+flow-typed/

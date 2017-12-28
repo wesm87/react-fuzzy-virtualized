@@ -3,13 +3,11 @@
 import React, { PureComponent } from 'react'
 import styled from 'styled-components'
 import classNames from 'classnames'
-import Fuse from 'fuse.js'
+import Fuse, { type FuseOptions } from 'fuse.js'
 import {
   pipe,
   prop,
-  pick,
-  slice,
-  sortBy,
+  take,
   isNil,
   isEmpty,
   complement,
@@ -72,9 +70,10 @@ const renderResultsDefault = (props, state) => {
 
   return results.map((val, i) => {
     const isSelected = selectedIndex === i
+    const handleClick = () => onClick(i)
 
     return (
-      <Result key={i} selected={isSelected} onClick={() => onClick(i)}>
+      <Result key={i} selected={isSelected} onClick={handleClick}>
         {prop('title', val)}
       </Result>
     )
@@ -93,24 +92,14 @@ type RenderResultsProps = Props & {
 }
 
 type OptionalProps = {
-  caseSensitive?: boolean,
-  className?: string,
-  distance?: number,
   id?: string,
-  include?: Array<*>,
-  maxPatternLength?: number,
-  width?: number | string,
-  keys?: Array<string> | string,
-  location?: number,
-  placeholder?: string,
-  renderResults?: (props: RenderResultsProps, state: State) => Node,
-  shouldSort?: boolean,
-  sortFn?: (a: number, b: number) => number,
-  threshold?: number,
-  tokenize?: boolean,
-  verbose?: boolean,
-  autoFocus?: boolean,
-  maxResults?: number,
+  className?: string,
+  width: number | string,
+  placeholder: string,
+  renderResults: (props: RenderResultsProps, state: State) => Node,
+  autoFocus: boolean,
+  maxResults: number,
+  fuseOptions: FuseOptions,
 }
 
 type RequiredProps = {
@@ -122,20 +111,12 @@ type Props = OptionalProps & RequiredProps
 
 export default class FuzzyContainer extends PureComponent {
   static defaultProps: OptionalProps = {
-    caseSensitive: false,
-    distance: 100,
-    include: [],
-    location: 0,
     width: 430,
     placeholder: 'Search',
     renderResults: renderResultsDefault,
-    shouldSort: true,
-    sortFn: sortBy(prop('score')),
-    threshold: 0.6,
-    tokenize: false,
-    verbose: false,
     autoFocus: false,
     maxResults: 10,
+    fuseOptions: {},
   };
 
   props: Props
@@ -148,9 +129,9 @@ export default class FuzzyContainer extends PureComponent {
   _inputRef: Node = null
 
   componentWillMount() {
-    const { list } = this.props
+    const { list, fuseOptions } = this.props
 
-    this.fuse = new Fuse(list, this.getOptions())
+    this.fuse = new Fuse(list, fuseOptions)
   }
 
   setInputRef = (ref) => {
@@ -159,23 +140,8 @@ export default class FuzzyContainer extends PureComponent {
 
   getInputRef = () => this._inputRef
 
-  getOptions = () => pick([
-    'caseSensitive',
-    'id',
-    'include',
-    'keys',
-    'shouldSort',
-    'sortFn',
-    'tokenize',
-    'verbose',
-    'maxPatternLength',
-    'distance',
-    'threshold',
-    'location',
-  ], this.props)
-
   getResults = pipe(
-    slice(0, this.props.maxResults - 1),
+    take(this.props.maxResults),
     this.fuse.search,
   )
 
@@ -192,7 +158,9 @@ export default class FuzzyContainer extends PureComponent {
     const { results, selectedIndex } = this.state
     const { onSelect } = this.props
 
-    if (keyCode === 40 && selectedIndex < results.length - 1) {
+    const maxIndex = results.length - 1
+
+    if (keyCode === 40 && selectedIndex < maxIndex) {
       this.setState({
         selectedIndex: selectedIndex + 1,
       })
