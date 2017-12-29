@@ -1,23 +1,26 @@
 // @flow
 
-import React, { PureComponent } from 'react'
+import React, { PureComponent, type Node } from 'react'
 import styled from 'styled-components'
 import classNames from 'classnames'
 import Fuse, { type FuseOptions } from 'fuse.js'
 import {
   pipe,
   prop,
-  take,
+  identity,
+  complement,
   isNil,
   isEmpty,
-  complement,
   ifElse,
   always,
   anyPass,
 } from 'ramda'
 
-const nonePass = complement(anyPass)
-const isNotNilOrEmpty = nonePass([isNil, isEmpty])
+const KEY_CODE_DOWN = 40
+const KEY_CODE_UP = 38
+const KEY_CODE_ENTER = 13
+
+const isNotNilOrEmpty = complement(anyPass([isNil, isEmpty]))
 
 export const SearchContainer = styled.div`
   padding: 4px;
@@ -38,7 +41,7 @@ export const SearchInput = styled.input.attrs({ type: 'text' })`
   color: #666;
 `
 
-export const ResultsContainer = styled.div`
+export const SearchResultsContainer = styled.div`
   box-sizing: border-box;
   position: relative;
   overflow: auto;
@@ -49,46 +52,30 @@ export const ResultsContainer = styled.div`
   box-shadow: 0px 12px 30px 2px rgba(0, 0, 0, 0.1);
 `
 
-const getResultBgColor = ifElse(
-  prop('selected'),
+const getSearchResultBackgroundColor = ifElse(
+  prop('active'),
   always('#f9f9f9'),
   always('#fff'),
 )
 
-export const Result = styled.div`
+export const SearchResult = styled.div`
   position: relative;
   padding: 12px;
   border-top: 1px solid #eee;
   font-size: 14px;
-  background-color: ${getResultBgColor};
+  background-color: ${getSearchResultBackgroundColor};
   color: #666;
 `
 
-const renderResultsDefault = (props, state) => {
-  const { onClick } = props
-  const { results, selectedIndex } = state
-
-  return results.map((val, i) => {
-    const isSelected = selectedIndex === i
-    const handleClick = () => onClick(i)
-
-    return (
-      <Result key={i} selected={isSelected} onClick={handleClick}>
-        {prop('title', val)}
-      </Result>
-    )
-  })
-}
-
 type State = {
-  results: Array<*>,
-  selectedIndex: number,
-  selectedValue: {},
+  results: Array<Object>,
+  selectedValue: Object,
+  activeResultIndex: number,
 }
 
 // eslint-disable-next-line no-use-before-define
 type RenderResultsProps = Props & {
-  onClick: (index: number) => void,
+  onClick: (value: Object) => void,
 }
 
 type OptionalProps = {
@@ -96,56 +83,82 @@ type OptionalProps = {
   className?: string,
   width: number | string,
   placeholder: string,
-  renderResults: (props: RenderResultsProps, state: State) => Node,
   autoFocus: boolean,
-  maxResults: number,
   fuseOptions: FuseOptions,
+  filterResults: (results: Array<Object>) => Array<Object>,
+  renderResults: (props: RenderResultsProps, state: State) => Node | Array<Node>,
 }
 
 type RequiredProps = {
-  onSelect: (value: {}) => void,
-  list: Array<{}>,
+  onSelect: (value: Object) => void,
+  list: Array<Object>,
 }
 
 type Props = OptionalProps & RequiredProps
 
-export default class FuzzyContainer extends PureComponent {
+const renderResultsDefault = (props: RenderResultsProps, state: State): Node | Array<Node> => {
+  const { onClick } = props
+  const { results, activeResultIndex } = state
+
+  return results.map((value, i) => {
+    const isActive = activeResultIndex === i
+    const handleClick = () => onClick(value)
+
+    return (
+      <SearchResult key={i} active={isActive} onClick={handleClick}>
+        {prop('title', value)}
+      </SearchResult>
+    )
+  })
+}
+
+export default class FuzzySearch extends PureComponent<Props, State> {
   static defaultProps: OptionalProps = {
     width: 430,
     placeholder: 'Search',
-    renderResults: renderResultsDefault,
     autoFocus: false,
-    maxResults: 10,
     fuseOptions: {},
+    filterResults: identity,
+    renderResults: renderResultsDefault,
   };
 
   props: Props
   state: State = {
     results: [],
-    selectedIndex: 0,
     selectedValue: {},
+    activeResultIndex: 0,
   }
 
-  _inputRef: Node = null
+  _inputRef: ?Node = null
+  _fuse: ?Fuse<{}> = null
 
   componentWillMount() {
     const { list, fuseOptions } = this.props
 
-    this.fuse = new Fuse(list, fuseOptions)
+    this._fuse = new Fuse(list, fuseOptions)
   }
 
-  setInputRef = (ref) => {
+  setInputRef = (ref: Node) => {
     this._inputRef = ref
   }
 
   getInputRef = () => this._inputRef
 
-  getResults = pipe(
-    take(this.props.maxResults),
-    this.fuse.search,
-  )
+  getResults = (value: string): Array<Object> => {
+    const { filterResults } = this.props
+    const { search } = (this._fuse || {})
 
-  handleChange = (event) => {
+    if (!search) {
+      return []
+    }
+
+    return pipe(
+      search,
+      filterResults,
+    )(value)
+  }
+
+  handleChange = (event: SyntheticInputEvent<EventTarget>): void => {
     const { value } = event.target
 
     this.setState({
@@ -153,23 +166,23 @@ export default class FuzzyContainer extends PureComponent {
     })
   }
 
-  handleKeyDown = (event) => {
+  handleKeyDown = (event: SyntheticKeyboardEvent<EventTarget>): void => {
     const { keyCode } = event
-    const { results, selectedIndex } = this.state
+    const { results, activeResultIndex } = this.state
     const { onSelect } = this.props
 
     const maxIndex = results.length - 1
 
-    if (keyCode === 40 && selectedIndex < maxIndex) {
+    if (keyCode === KEY_CODE_DOWN && activeResultIndex < maxIndex) {
       this.setState({
-        selectedIndex: selectedIndex + 1,
+        activeResultIndex: activeResultIndex + 1,
       })
-    } else if (keyCode === 38 && selectedIndex > 0) {
+    } else if (keyCode === KEY_CODE_UP && activeResultIndex > 0) {
       this.setState({
-        selectedIndex: selectedIndex - 1,
+        activeResultIndex: activeResultIndex - 1,
       })
-    } else if (keyCode === 13) {
-      const selectedValue = results[selectedIndex]
+    } else if (keyCode === KEY_CODE_ENTER) {
+      const selectedValue = results[activeResultIndex]
 
       if (selectedValue) {
         onSelect(selectedValue)
@@ -178,28 +191,32 @@ export default class FuzzyContainer extends PureComponent {
 
       this.setState({
         results: [],
-        selectedIndex: 0,
+        activeResultIndex: 0,
       })
     }
   }
 
-  handleMouseClick = (clickedIndex) => {
-    const { results } = this.state
+  handleMouseClick = (value: Object): void => {
     const { onSelect } = this.props
 
-    const selectedValue = results[clickedIndex]
-
-    if (selectedValue) {
-      onSelect(selectedValue)
+    if (value) {
+      onSelect(value)
     }
 
     this.setState({
       results: [],
-      selectedIndex: 0,
+      activeResultIndex: 0,
     })
   }
 
-  render() {
+  clearActiveResult = () => {
+    this.setState({
+      results: [],
+      activeResultIndex: 0,
+    })
+  }
+
+  render(): Node {
     const {
       className,
       width,
@@ -217,25 +234,27 @@ export default class FuzzyContainer extends PureComponent {
       onClick: this.handleMouseClick,
     }
 
+    const { title = '' } = (selectedValue || {})
+
     return (
       <div
         className={containerClassName}
-        style={{ width }}
         onKeyDown={this.handleKeyDown}
+        style={{ width }}
       >
         <SearchContainer>
           <SearchInput
             ref={this.setInputRef}
-            value={prop('title', selectedValue)}
+            value={title}
             placeholder={placeholder}
             autoFocus={autoFocus}
             onChange={this.handleChange}
           />
         </SearchContainer>
         {isNotNilOrEmpty(results) && (
-          <ResultsContainer>
+          <SearchResultsContainer>
             {renderResults(renderResultsProps, this.state)}
-          </ResultsContainer>
+          </SearchResultsContainer>
         )}
       </div>
     )

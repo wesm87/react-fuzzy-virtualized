@@ -1,1 +1,1 @@
-export { default as FuzzyContainer } from './FuzzyContainer'
+export { default as FuzzySearch } from './FuzzySearch'
