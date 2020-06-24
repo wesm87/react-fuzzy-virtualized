@@ -49,5 +49,8 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-is": "^16.13.1"
+  },
+  "resolutions": {
+    "sshpk": ">=1.13.2"
   }
 }
