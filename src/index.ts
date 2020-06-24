@@ -1,1 +1,1 @@
-export { default as FuzzySearch } from './FuzzySearch'
+export { default as FuzzySearch } from './FuzzySearch';

@@ -12,6 +12,7 @@
     "lib/*.d.ts"
   ],
   "scripts": {
+    "prettier": "prettier --write 'src'",
     "build:types": "tsc",
     "build:lib": "rm -rf lib/* && NODE_ENV=production babel src --out-dir 'lib' --extensions '.ts,.tsx' --no-comments",
     "build": "yarn build:lib && yarn build:types",
@@ -38,6 +39,7 @@
     "@types/styled-components": "^5.1.0",
     "babel-plugin-transform-imports": "^2.0.0",
     "babel-preset-react-app": "^9.1.2",
+    "husky": "^4.2.5",
     "jest": "^26.1.0",
     "prettier": "^2.0.5",
     "react": "^16.13.1",
@@ -52,5 +54,10 @@
   },
   "resolutions": {
     "sshpk": ">=1.13.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn prettier"
+    }
   }
 }
