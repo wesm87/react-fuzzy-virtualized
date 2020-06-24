@@ -5,39 +5,49 @@
   "author": "Wes Moberly <wesm87@gmail.com>",
   "repository": "https://github.com/wesm87/react-fuzzy-virtualized",
   "license": "MIT",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*.js",
+    "lib/*.d.ts"
+  ],
   "scripts": {
-    "build": "NODE_ENV=production babel src --out-dir build",
-    "prepublish": "yarn build",
-    "lint": "eslint src scripts",
-    "test": "node ./scripts/test",
-    "types:install": "flow-typed install"
+    "build:types": "tsc",
+    "build:lib": "rm -rf lib/* && NODE_ENV=production babel src --out-dir 'lib' --extensions '.ts,.tsx' --no-comments",
+    "build": "yarn build:lib && yarn build:types",
+    "prepublishOnly": "yarn build",
+    "postversion": "git push && git push --tags",
+    "test": "node ./scripts/test"
   },
   "dependencies": {
-    "classnames": "^2.2.5",
-    "fuse.js": "^3.2.0",
-    "prop-types": "^15.6.0",
-    "prop-types-extra": "^1.0.1",
-    "ramda": "^0.25.0",
-    "styled-components": "^2.3.2"
+    "classnames": "^2.2.6",
+    "fuse.js": "^6.3.0",
+    "prop-types": "^15.7.2",
+    "prop-types-extra": "^1.1.1",
+    "ramda": "^0.27.0",
+    "styled-components": "^5.1.1"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
-    "babel-eslint": "^8.0.3",
-    "babel-jest": "^22.0.3",
-    "babel-plugin-react-flow-props-to-prop-types": "^0.15.0",
-    "babel-plugin-transform-imports": "^1.4.1",
-    "babel-preset-react-app": "^3.1.0",
-    "eslint": "^4.13.1",
-    "eslint-config-react-app": "^2.0.1",
-    "eslint-plugin-flowtype": "^2.40.1",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-jsx-a11y": "^6.0.3",
-    "eslint-plugin-react": "^7.4.0",
-    "flow-bin": "^0.61.0",
-    "flow-typed": "^2.2.3",
-    "jest": "^22.0.3",
-    "react": "^16.2.0"
+    "@babel/cli": "^7.10.0",
+    "@babel/core": "^7.10.0",
+    "@babel/preset-env": "^7.10.0",
+    "@babel/preset-typescript": "^7.10.1",
+    "@types/classnames": "^2.2.10",
+    "@types/ramda": "^0.27.6",
+    "@types/react": "^16.9.38",
+    "@types/styled-components": "^5.1.0",
+    "babel-plugin-transform-imports": "^2.0.0",
+    "babel-preset-react-app": "^9.1.2",
+    "jest": "^26.1.0",
+    "prettier": "^2.0.5",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-is": "^16.13.1",
+    "typescript": "^3.9.5"
+  },
+  "peerDependencies": {
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-is": "^16.13.1"
   }
 }

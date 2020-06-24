@@ -58,7 +58,4 @@ typings/
 .env
 
 # Build directory
-build/
-
-# Flow types
-flow-typed/
+lib/
