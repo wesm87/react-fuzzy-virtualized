@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renderResultsDefault should render a list of results: with default props 1`] = `
+<Fragment>
+  <styled.div
+    className="FuzzySearch-searchResult"
+    isActive={true}
+    key="0"
+    onClick={[Function]}
+  >
+    Item 1
+  </styled.div>
+  <styled.div
+    className="FuzzySearch-searchResult"
+    isActive={false}
+    key="1"
+    onClick={[Function]}
+  >
+    Item 2
+  </styled.div>
+  <styled.div
+    className="FuzzySearch-searchResult"
+    isActive={false}
+    key="2"
+    onClick={[Function]}
+  >
+    Item 3
+  </styled.div>
+</Fragment>
+`;

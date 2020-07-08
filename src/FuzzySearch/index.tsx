@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import cx from 'classnames';
 
@@ -22,10 +22,21 @@ const FuzzySearch = (props: Props) => {
   const {
     results,
     selectedValue,
-    renderResultsProps,
+    activeResultIndex,
     handleChange,
     handleKeyDown,
+    handleMouseClick,
   } = useFuzzySearch(props);
+
+  const renderResultsProps = useMemo(
+    () => ({
+      results,
+      selectedValue,
+      activeResultIndex,
+      onClick: handleMouseClick,
+    }),
+    [results, selectedValue, activeResultIndex, handleMouseClick],
+  );
 
   const { title = '' } = selectedValue ?? {};
 

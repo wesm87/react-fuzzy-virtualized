@@ -3,24 +3,16 @@ import type { ChangeEvent, KeyboardEvent } from 'react';
 import Fuse from 'fuse.js';
 import { identity } from 'ramda';
 
+import {
+  isInteger,
+  isEnterKeyEvent,
+  isUpKeyEvent,
+  isDownKeyEvent,
+} from './utils';
 import type { Obj, Props } from './types';
 
-const KEY_CODE_DOWN = 40;
-const KEY_CODE_UP = 38;
-const KEY_CODE_ENTER = 13;
-
-const isIntegerPolyfill = (value: number): boolean =>
-  typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
-
-const isInteger = Number.isInteger ?? isIntegerPolyfill;
-
-const useFuzzySearch = (props: Props) => {
-  const { list, onSelect, fuseOptions = {}, filterResults = identity } = props;
-
+const useFuseRef = ({ list, fuseOptions = {} }: Props) => {
   const fuseRef = useRef<Fuse<Obj, Obj> | null>(null);
-  const [results, setResults] = useState<Obj[]>([]);
-  const [selectedValue, setSelectedValue] = useState<Obj | null>(null);
-  const [activeResultIndex, setActiveResultIndex] = useState<number>(0);
 
   useEffect(() => {
     fuseRef.current = new Fuse(list, fuseOptions);
@@ -29,6 +21,18 @@ const useFuzzySearch = (props: Props) => {
       fuseRef.current = null;
     };
   });
+
+  return fuseRef;
+};
+
+const useFuzzySearch = (props: Props) => {
+  const { onSelect, filterResults = identity } = props;
+
+  const [results, setResults] = useState<Obj[]>([]);
+  const [selectedValue, setSelectedValue] = useState<Obj | null>(null);
+  const [activeResultIndex, setActiveResultIndex] = useState<number>(0);
+
+  const fuseRef = useFuseRef(props);
 
   const getResults = useCallback((value: string): Obj[] => {
     const { search } = fuseRef.current ?? {};
@@ -62,32 +66,28 @@ const useFuzzySearch = (props: Props) => {
     setActiveResultIndex(0);
   }, []);
 
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>): void => {
-      const { value } = event.target;
+  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
 
-      setResults(getResults(value));
-    },
-    [],
-  );
+    setResults(getResults(value));
+  }, []);
 
-  const handleKeyDown = useCallback((event: KeyboardEvent): void => {
-    const { keyCode } = event;
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
     const maxIndex = results.length - 1;
     const canIncrementIndex = activeResultIndex < maxIndex;
     const canDecrementIndex = activeResultIndex > 0;
 
-    if (keyCode === KEY_CODE_DOWN && canIncrementIndex) {
+    if (isDownKeyEvent(event) && canIncrementIndex) {
       incrementActiveResultIndex(activeResultIndex);
       return;
     }
 
-    if (keyCode === KEY_CODE_UP && canDecrementIndex) {
+    if (isUpKeyEvent(event) && canDecrementIndex) {
       decrementActiveResultIndex(activeResultIndex);
       return;
     }
 
-    if (keyCode === KEY_CODE_ENTER) {
+    if (isEnterKeyEvent(event)) {
       const selectedValue = results[activeResultIndex];
 
       if (selectedValue) {
@@ -99,7 +99,7 @@ const useFuzzySearch = (props: Props) => {
     }
   }, []);
 
-  const handleMouseClick = useCallback((value: Obj): void => {
+  const handleMouseClick = useCallback((value: Obj) => {
     if (value) {
       onSelect(value);
     }
@@ -107,25 +107,23 @@ const useFuzzySearch = (props: Props) => {
     clearActiveResult();
   }, []);
 
-  const renderResultsProps = useMemo(
-    () => ({
-      results,
-      selectedValue,
-      activeResultIndex,
-      onClick: handleMouseClick,
-    }),
-    [results, selectedValue, activeResultIndex, handleMouseClick],
-  );
-
   const result = useMemo(
     () => ({
       results,
       selectedValue,
-      renderResultsProps,
+      activeResultIndex,
       handleChange,
       handleKeyDown,
+      handleMouseClick,
     }),
-    [results, selectedValue, renderResultsProps, handleChange, handleKeyDown],
+    [
+      results,
+      selectedValue,
+      activeResultIndex,
+      handleChange,
+      handleKeyDown,
+      handleMouseClick,
+    ],
   );
 
   return result;
